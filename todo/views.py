@@ -1,7 +1,61 @@
-from rest_framework.generics import ListCreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework import status, permissions
+from .models import ToDoList
+from .serializers import ToDoListSerializer
 from core.views import BaseAPIView
 
 
 class ToDoListView(ListCreateAPIView, BaseAPIView):
-    pass
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ToDoListSerializer
+
+    def get_queryset(self):
+        return ToDoList.objects.filter(user=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        custom_response = self.format_response(
+            message="Todo lists fetched successfully",
+            data=serializer.data    
+        )
+        return custom_response
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        custom_response = self.format_response(
+            message="Todo list created successfully",
+            data=serializer.data,
+            status_code=status.HTTP_201_CREATED
+        )
+        return custom_response
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class ToDoListDetailView(RetrieveUpdateDestroyAPIView, BaseAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ToDoListSerializer
+    queryset = ToDoList.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.serializer_class(instance)
+        custom_response = self.format_response(
+            message="Todo list fetched successfully",
+            data=serializer.data,
+            status_code=status.HTTP_200_OK
+        )
+        return custom_response
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        custom_response = self.format_response(
+            message="Todo list deleted successfully",
+            status_code=status.HTTP_204_NO_CONTENT
+        )
+        return custom_response

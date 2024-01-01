@@ -31,7 +31,7 @@ def generate_refresh_token(id):
 
 def decode_access_token(token):
     try:
-        payload = jwt.decode(token, access_secret_key, algorithms="HS256")
+        payload = jwt.decode(token, access_secret_key, algorithms=["HS256"])
         return payload["id"]
     except:
         return None
@@ -39,7 +39,7 @@ def decode_access_token(token):
 
 def decode_refresh_token(token):
     try:
-        payload = jwt.decode(token, refresh_secret_key, algorithms="HS256")
+        payload = jwt.decode(token, refresh_secret_key, algorithms=["HS256"])
         return payload["id"]
     except:
         return None
