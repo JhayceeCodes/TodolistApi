@@ -1,5 +1,6 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework import status, permissions
+from rest_framework.exceptions import PermissionDenied
 from .models import ToDoList
 from .serializers import ToDoListSerializer
 from core.views import BaseAPIView
@@ -8,6 +9,7 @@ from core.views import BaseAPIView
 class ToDoListView(ListCreateAPIView, BaseAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ToDoListSerializer
+
 
     def get_queryset(self):
         return ToDoList.objects.filter(user=self.request.user)
@@ -40,6 +42,14 @@ class ToDoListDetailView(RetrieveUpdateDestroyAPIView, BaseAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = ToDoListSerializer
     queryset = ToDoList.objects.all()
+
+    def get_object(self):
+        obj = super().get_object()
+        if obj.user != self.request.user:
+            raise PermissionDenied(
+                "You don't have permission to access this ToDoList.")
+
+        return obj
 
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
