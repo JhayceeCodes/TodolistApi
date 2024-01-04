@@ -1,6 +1,6 @@
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework import status, permissions
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, NotFound
 from .models import ToDoList, Todo
 from .serializers import ToDoListSerializer, TodoSerializer
 from core.views import BaseAPIView
@@ -76,6 +76,10 @@ class TodoView(ListCreateAPIView, BaseAPIView):
     serializer_class = TodoSerializer
 
     def get_queryset(self, todolist_id):
+        todolist = ToDoList.objects.get(id=todolist_id)
+        if not todolist.user == self.request.user:
+            raise PermissionDenied(
+                "You don't have permission to access this Todolist.")
         return Todo.objects.filter(todolist_id=todolist_id)
 
     def list(self, request, todolist_id, *args, **kwargs):
@@ -110,11 +114,15 @@ class TodoDetailView(RetrieveUpdateDestroyAPIView, BaseAPIView):
     def get_object(self):
         obj = super().get_object()
         todolist_id = self.kwargs.get('todolist_id')
+        todolist = ToDoList.objects.get(id=todolist_id)
         if obj.todolist_id != todolist_id:
+            raise NotFound(
+                "Todo does not exist")
+        elif todolist.user != self.request.user:
             raise PermissionDenied(
-                "You don't have permission to access this Todo.")
-
-        return obj
+                "You don't have permission to access this Todo")
+        else:
+            return obj
 
     def get(self, request, todolist_id, *args, **kwargs):
         instance = self.get_object()
