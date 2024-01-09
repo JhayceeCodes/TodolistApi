@@ -33,7 +33,7 @@ class RegisterView(APIView, BaseAPIView):
         receiver = user.email
         data = {"body": body, "subject": subject, "receiver": receiver}
 
-        #send_mail(data)
+        send_mail(data)
 
         return self.format_response(
             message="account created, check email for verification link",
